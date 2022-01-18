@@ -2,102 +2,94 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Alumno;
 use Illuminate\Http\Request;
-use App\examen;
+use Illuminate\Support\Facades\DB;
 
-class alumnos extends Controller
+class AlumnosController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     * 
-     * @return \Illuminate\Http\Response
-     */
+    public function index()
+    {
+        $paginador = Alumno::all();
 
-     public function index()
-     {
-         $ordenes = ['nombre'];
-         $orden = request()->query('orden') ?: 'nombre';
-         abort_unless(in_array($orden, $ordenes), 404);
-
-         $alumnos = DB::table('alumnos')
-            ->orderBy($orden);
-
-        $paginator = $alumnos->paginate(1);
-        $paginador->appends(compact(
-            'nombre',
-            'orden'
-        ));
-
-        return view('alumno.index', [
+        return view('alumnos.index', [
             'alumnos' => $paginador,
         ]);
+    }
 
-     }
+    public function create()
+    {
+        $alumno = new Alumno();
 
-     public function create()
-     {
-         $alumnos = (object) [
-             'nombre' => null,
-         ];
+        return view('alumnos.create', [
+            'alumno' => $alumno,
+        ]);
+    }
 
-         return view ('alumno.create', [
-             'nombre' => $alumnos,
-         ]);
-     }
+    public function store()
+    {
+        $validados = $this->validar();
 
-     public function store()
-     {
-         $validos = $this->validar();
+        $alumno = new Alumno();
+        $alumno->nombre = $validados['nombre'];
+        $alumno->save();
 
-         DB::table('alumno')->insert([
-             'nombre' =>$validos['nombre'],
-         ]);
+        return redirect('/alumnos')
+            ->with('success', 'Alumno insertado con éxito.');
+    }
 
-         return redirect('/alumno')
-            ->with('success', 'Nombre bien insertado.');
-     }
+    public function edit($id)
+    {
+        $alumno = Alumno::findOrFail($id);
 
-     public function edit($id)
-     {
-         $alumnos = $this->findAlumno($id);
+        return view('alumnos.edit', [
+            'alumno' => $alumno,
+        ]);
+    }
 
-         return view('alumno.edit', [
-             'alumno' => $alumnos,
-         ]);
-     }
+    public function update($id)
+    {
+        $validados = $this->validar();
+        $alumno = Alumno::findOrFail($id);
+        $alumno->nombre = $validados['nombre'];
+        $alumno->save();
 
-     public function update($id)
-     {
-         $validados = $this->validar();
-         $this->findAlumno($id);
+        return redirect('/alumnos')
+            ->with('success', 'Alumno modificado con éxito.');
+    }
 
-         DB::table('alumno')
-            ->where('id', $id)
-            ->update([
-                'nombre' => $validados['nombre'],
+    private function validar()
+    {
+        $validados = request()->validate([
+            'nombre' => 'required|max:255',
         ]);
 
-        return redirect('/alumno')
-            ->with('success', 'Nombre bien modificado.');
-     }
+        return $validados;
+    }
 
-     private function validar()
-     {
-         $validados = request()->validate([
-             'nombre' => 'required|max:15',
-         ]);
+    public function destroy($id)
+    {
+        $alumno = Alumno::findOrFail($id);
+        $alumno->delete();
 
-         return $validados;
-     }
+        return redirect()->back()
+            ->with('success', 'Alumno borrado correctamente');
+    }
 
-     private function findAlumno($id)
-     {
-         $alumnos = DB::table('alumno')
-            ->where('id', $id)
+    public function criterios($id)
+    {
+        $alumno = Alumno::findOrFail($id);
+
+        $notas = DB::table('notas')
+            ->select('ce', DB::raw('MAX(nota) AS nota'))
+            ->join('ccee AS c', 'ce_id', '=', 'c.id')
+            ->where('alumno_id', $id)
+            ->groupBy('ce_id', 'ce')
             ->get();
-        
-        abort_if($alumnos->isEmpty(), 404);
 
-        return $alumnos->first();
-     }
+        return view('alumnos.criterios', [
+            'alumno' => $alumno,
+            'notas' => $notas,
+        ]);
+    }
 }

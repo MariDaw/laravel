@@ -1,7 +1,6 @@
 <x-layout>
-    <form action="{{ route('alumno.update', $alumnos->id, false) }}" method="POST">
+    <form action="{{ route('alumnos.update', $alumno->id, false) }}" method="POST">
         @method('PUT')
-        <x-alumno.form
-            :alumno="$alumno" />
+        <x-alumnos.form :alumno="$alumno" />
     </form>
 </x-layout>

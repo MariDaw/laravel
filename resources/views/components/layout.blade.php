@@ -20,8 +20,8 @@
                     @php
                         $segmentos = request()->segments();
                         $home = empty($segmentos);
-                        $alumnos = !empty($segmentos) && $segmentos[0] == 'alumno';
-                        
+                        $emple = !empty($segmentos) && $segmentos[0] == 'emple';
+                        $depart = !empty($segmentos) && $segmentos[0] == 'depart';
                     @endphp
                     <nav>
                         <a class="hover:text-blue-500 hover:underline @if($home) font-semibold @endif" href="/">Inicio</a> |
